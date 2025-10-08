@@ -1,0 +1,128 @@
+openapi: 3.1.1
+info:
+  title: Syllabi Search API
+  version: "1.0.0"
+  description: 课程大纲语义检索服务（Syllabi Search API）
+servers:
+  - url: https://situations-regime-terrain-down.trycloudflare.com
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      summary: 健康检查（不鉴权）
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthzResponse"
+
+  /courses:
+    get:
+      operationId: listCourses
+      summary: 列出课程信息
+      responses:
+        "200":
+          description: 课程列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesResponse"
+        "401":
+          description: 未授权
+
+  /search:
+    post:
+      operationId: semanticSearch
+      summary: 语义检索课程大纲
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchRequest"
+      responses:
+        "200":
+          description: 检索结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+        "401":
+          description: 未授权
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    HealthzResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
+
+    CourseItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        info:
+          type: string
+      required: [id, info]
+
+    CoursesResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CourseItem"
+      required: [ok, data]
+
+    SearchItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        text:
+          type: string
+        score:
+          type: number
+      required: [id, text, score]
+
+    SearchResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchItem"
+      required: [ok, data]
+
+    SearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: 用户自然语言问题
+        top_k:
+          type: integer
+          default: 3
+          minimum: 1
+          maximum: 20
+      required: [query]

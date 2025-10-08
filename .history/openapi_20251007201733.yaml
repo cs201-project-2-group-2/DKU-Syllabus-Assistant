@@ -1,0 +1,107 @@
+openapi: 3.1.0
+info:
+  title: Syllabi Search API
+  version: "1.0.0"
+  description: |
+    课程大纲语义检索服务（Syllabi Search API）。
+    - 查询示例：
+      - “What is the attendance policy for COMPSCI 207?”
+      - “列出所有课程信息”
+servers:
+  - url: https://container-fur-classifieds-sharing.trycloudflare.com
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /healthz:
+    get:
+      summary: 健康检查（不需要鉴权）
+      operationId: healthz
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+
+  /courses:
+    get:
+      summary: 列出课程信息
+      operationId: listCourses
+      responses:
+        "200":
+          description: 返回课程列表
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, data]
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        info: { type: string }
+        "401":
+          description: 无效或缺失 API Key
+
+  /search:
+    post:
+      summary: 语义检索课程大纲
+      operationId: semanticSearch
+      description: |
+        输入自然语言问题（例如“attendance policy”），返回最相关的课程大纲片段。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  description: 用户自然语言问题
+                top_k:
+                  type: integer
+                  default: 3
+                  minimum: 1
+                  maximum: 20
+      responses:
+        "200":
+          description: 检索结果
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, data]
+                properties:
+                  ok: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, text, score]
+                      properties:
+                        id: { type: integer }
+                        text: { type: string, description: 命中片段 }
+                        score: { type: number, description: 相似度分数 }
+        "401":
+          description: 无效或缺失 API Key
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key

@@ -1,0 +1,91 @@
+openapi: 3.1.0
+info:
+  title: Syllabi Search API
+  version: "1.0.0"
+  description: 课程大纲语义检索服务（Syllabi Search API）
+servers:
+  - url: https://least-backup-iowa-period.trycloudflare.com
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      summary: 健康检查（不鉴权）
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
+  /courses:
+    get:
+      operationId: listCourses
+      summary: 列出课程信息
+      responses:
+        "200":
+          description: 课程列表
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, data]
+                properties:
+                  ok: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        info: { type: string }
+        "401": { description: 未授权 }
+
+  /search:
+    post:
+      operationId: semanticSearch
+      summary: 语义检索课程大纲
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string }
+                top_k: { type: integer, default: 3, minimum: 1, maximum: 20 }
+      responses:
+        "200":
+          description: 检索结果
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, data]
+                properties:
+                  ok: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, text, score]
+                      properties:
+                        id: { type: integer }
+                        text: { type: string }
+                        score: { type: number }
+        "401": { description: 未授权 }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key

@@ -1,0 +1,83 @@
+openapi: 3.1.0
+info:
+  title: Syllabi Search API
+  version: "1.0.0"
+  description: |
+    课程大纲语义检索服务。
+    用法建议（给模型）：
+    - 当用户问到出勤、评分、作业、考试安排时调用 /search。
+    - 无结果时，提醒用户提供更具体的课程名或关键词。
+servers:
+  - url: https://xxxx.ngrok-free.app
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      summary: 健康检查
+      responses:
+        "200": { description: OK }
+
+  /search:
+    post:
+      operationId: semanticSearch
+      summary: 语义检索课程大纲
+      description: 输入自然语言问题，返回最相关片段。
+      security: [ { ApiKeyAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string, description: "用户自然语言问题" }
+                top_k: { type: integer, default: 3 }
+      responses:
+        "200":
+          description: 检索结果
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [query, results]
+                properties:
+                  query: { type: string }
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        text: { type: string }
+                        score: { type: number }
+        "401": { description: 未授权 }
+
+  /courses:
+    get:
+      operationId: listCourses
+      summary: 列出课程信息
+      security: [ { ApiKeyAuth: [] } ]
+      responses:
+        "200":
+          description: 课程列表
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [courses]
+                properties:
+                  courses:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        info: { type: string }
+        "401": { description: 未授权 }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
